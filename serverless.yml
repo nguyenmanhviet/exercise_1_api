@@ -1,0 +1,44 @@
+service: 'exercise-1'
+
+custom:
+  webpack: webpack.config.js
+  webpackIncludeModules:
+    packagePath: ./package.json
+  includeModules:
+    forceExclude:
+      - aws-sdk
+
+provider:
+  name: aws
+  runtime: nodejs16.x
+  region: 'ap-southeast-1'
+  role: arn:aws:iam::995871549478:user/manh_viet
+
+  apiGateway:
+    shouldStartNameWithService: true
+
+plugins:
+  - serverless-webpack
+  - serverless-offline
+
+functions:
+  sqsMessageExecutor:
+    handler: src/main.handler
+    timeout: 600 # 10mins
+    role: arn:aws:iam::995871549478:role/execution_sqs_lambda
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - MessageQueue
+              - Arn
+
+resources:
+  Resources:
+    MessageQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: 'exercise_1.fifo'
+        FifoQueue: true
+        VisibilityTimeout: 660 # 11mins
+        ReceiveMessageWaitTimeSeconds: 20
